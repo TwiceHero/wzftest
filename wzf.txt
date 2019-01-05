@@ -76,10 +76,6 @@ public class Duanxin {
         paramMap.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date()));
         
         bodyMap.put("templateParameter", paramMap);
-        
-        String bodyJson = JSON.toJSONString(bodyMap);
-        System.out.println(bodyJson);
-        System.out.println(doPostForJson(url,authorizationNew, bodyJson));
     }
     
     public static String md5(String userName, String passWord,String time) {
