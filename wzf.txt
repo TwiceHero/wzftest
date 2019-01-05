@@ -1,4 +1,119 @@
-人生自古谁无死，留取丹心照汗青
+/**
+ * Copyright © 2019 公司名. All rights reserved.
+ * 
+ * @Title: Duanxin.java
+ * @Prject: WzfDevelopTest
+ * @Package: snc.wzf.http
+ * @Description: TODO
+ * @author: wzf
+ * @date: 2019年1月2日 下午3:53:53
+ * @version: V1.0
+ */
+package snc.wzf.http;
 
-红掌拨清波
-曲项向天歌，白毛浮绿水
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+
+import com.alibaba.fastjson.JSON;
+
+/**
+ * @ClassName: Duanxin
+ * @Description: TODO
+ * @author: wzf
+ * @date: 2019年1月2日 下午3:53:53
+ */
+public class Duanxin {
+    public static void main(String[] args) {
+        String url = "http://dev.cmccopen.cn/api/v1/sms/send";
+        String apiKey = "318b1157f7df4d1b85e7d7acda80c2a9";
+        String secretKey = "a58ab84aa7904b3599c74e1805906d6c";
+        String time = String.valueOf(System.currentTimeMillis());
+        String sign = md5(apiKey,secretKey,time);
+        Map<String,String> headerMap = new HashMap<>();
+        headerMap.put("apiKey", apiKey);
+        headerMap.put("time", time);
+        headerMap.put("sign", sign);
+        String authorization = JSON.toJSONString(headerMap);
+        String authorizationNew = Base64.encodeBase64String(authorization.getBytes());
+        System.out.println(authorizationNew);
+//        getIp();
+        
+        Map<String,Object> bodyMap = new HashMap<>();
+        bodyMap.put("messageSign", "神舟智慧运维平台");
+        List<String> mobiles = new ArrayList<>();
+        mobiles.add("15988121563");
+        mobiles.add("13588771587");
+        bodyMap.put("mobiles", mobiles);
+        bodyMap.put("needReceipt", 0);
+        bodyMap.put("templateId", 12345795);
+        Map<String,String> paramMap = new HashMap<>();
+        paramMap.put("id", "12345");
+        paramMap.put("status", "problem");
+        paramMap.put("level", "严重");
+        paramMap.put("group", "数据库");
+        paramMap.put("host", "zjjjwzftest01");
+        paramMap.put("content", "我最最最最最最最最最最最最");
+//        String alertTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date());
+        paramMap.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date()));
+        
+        bodyMap.put("templateParameter", paramMap);
+        
+        String bodyJson = JSON.toJSONString(bodyMap);
+        System.out.println(bodyJson);
+        System.out.println(doPostForJson(url,authorizationNew, bodyJson));
+    }
+    
+   
+    
+    public static String doPostForJson(String url, String authorization,String bodyJson) {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(url);
+        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(180 * 1000)
+                .setConnectionRequestTimeout(180 * 1000).setSocketTimeout(180 * 1000).setRedirectsEnabled(true).build();
+
+        httpPost.setConfig(requestConfig);
+
+        try {
+            StringEntity requestEntity = new StringEntity(bodyJson, ContentType.create("application/json", "utf-8"));
+            httpPost.setHeader("Authorization", authorization);
+            httpPost.setHeader("Content-type", "application/json;charset=UTF-8");
+            httpPost.setEntity(requestEntity);
+            HttpResponse response = httpClient.execute(httpPost);
+            HttpEntity httpEntity = response.getEntity();
+            String reponseContent = EntityUtils.toString(httpEntity);
+            EntityUtils.consume(httpEntity);// 释放资源
+            System.out.println("响应内容：" + reponseContent);
+            return String.valueOf(response.getStatusLine().getStatusCode());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "post failure :caused by-->" + e.getMessage().toString();
+        } finally {
+            if (null != httpClient) {
+                try {
+                    httpClient.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+}
